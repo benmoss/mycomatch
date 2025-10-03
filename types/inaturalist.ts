@@ -22,6 +22,10 @@ export interface Observation {
   location?: string;
   observed_on: string;
   place_guess?: string;
+  geojson?: {
+    type: string;
+    coordinates: [number, number]; // [longitude, latitude]
+  };
 }
 
 export interface INaturalistResponse {
@@ -47,4 +51,9 @@ export interface QuizQuestion {
     taxonId: number;
   }>;
   observationId: number;
+  location?: {
+    lat: number;
+    lng: number;
+    place: string;
+  };
 }

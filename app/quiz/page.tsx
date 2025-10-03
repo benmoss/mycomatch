@@ -18,6 +18,7 @@ export default function QuizPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<QuizFilters>({});
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showLocationHint, setShowLocationHint] = useState(false);
 
   useEffect(() => {
     loadQuiz();
@@ -83,6 +84,7 @@ export default function QuizPage() {
       setIsAnswered(false);
       setIsImageZoomed(false);
       setCurrentPhotoIndex(0);
+      setShowLocationHint(false);
     }
   };
 
@@ -289,6 +291,38 @@ export default function QuizPage() {
           </div>
 
           <p className="text-lg font-medium mb-4">What species is this?</p>
+
+          {/* Location Hint */}
+          {!isAnswered && currentQuestion.location && (
+            <div className="mb-4">
+              <button
+                onClick={() => setShowLocationHint(!showLocationHint)}
+                className="w-full text-left p-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex justify-between items-center"
+              >
+                <span className="font-medium">
+                  {showLocationHint ? "🗺️ Hide Location" : "🗺️ Show Location"}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {showLocationHint ? "▲" : "▼"}
+                </span>
+              </button>
+
+              {showLocationHint && (
+                <div className="mt-3 border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-2 text-sm text-gray-600 dark:text-gray-400">
+                    📍 {currentQuestion.location.place}
+                  </div>
+                  <iframe
+                    width="100%"
+                    height="300"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${currentQuestion.location.lng - 0.1},${currentQuestion.location.lat - 0.1},${currentQuestion.location.lng + 0.1},${currentQuestion.location.lat + 0.1}&layer=mapnik&marker=${currentQuestion.location.lat},${currentQuestion.location.lng}`}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Options */}
           <div className="space-y-3">

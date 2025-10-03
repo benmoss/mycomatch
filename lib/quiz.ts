@@ -41,6 +41,15 @@ export function generateQuizQuestion(
   // Shuffle the options
   const options = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
 
+  // Extract location if available
+  const location = correctObservation.geojson?.coordinates
+    ? {
+        lng: correctObservation.geojson.coordinates[0],
+        lat: correctObservation.geojson.coordinates[1],
+        place: correctObservation.place_guess || "Unknown location",
+      }
+    : undefined;
+
   return {
     id: Date.now(),
     photoUrl: correctObservation.photos[0].url.replace("square", "large"),
@@ -52,6 +61,7 @@ export function generateQuizQuestion(
     correctAnswer,
     options,
     observationId: correctObservation.id,
+    location,
   };
 }
 
