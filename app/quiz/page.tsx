@@ -13,6 +13,7 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   useEffect(() => {
     loadQuiz();
@@ -59,6 +60,7 @@ export default function QuizPage() {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null);
       setIsAnswered(false);
+      setIsImageZoomed(false);
     }
   };
 
@@ -139,7 +141,10 @@ export default function QuizPage() {
         {/* Question */}
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
           {/* Image */}
-          <div className="relative w-full h-96 mb-6 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <div
+            className="relative w-full h-96 mb-6 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-zoom-in hover:opacity-90 transition-opacity"
+            onClick={() => setIsImageZoomed(true)}
+          >
             <Image
               src={currentQuestion.photoUrl}
               alt="Mushroom to identify"
@@ -147,6 +152,9 @@ export default function QuizPage() {
               className="object-contain"
               priority
             />
+            <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+              🔍 Click to zoom
+            </div>
           </div>
 
           <p className="text-lg font-medium mb-4">What species is this?</p>
@@ -243,6 +251,33 @@ export default function QuizPage() {
           Photo: {currentQuestion.photoAttribution} (via iNaturalist)
         </p>
       </div>
+
+      {/* Image Zoom Modal */}
+      {isImageZoomed && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsImageZoomed(false)}
+        >
+          <div className="relative w-full h-full max-w-6xl max-h-[90vh]">
+            <Image
+              src={currentQuestion.photoUrl}
+              alt="Mushroom to identify (zoomed)"
+              fill
+              className="object-contain"
+              priority
+            />
+            <button
+              onClick={() => setIsImageZoomed(false)}
+              className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm"
+            >
+              ✕ Close
+            </button>
+            <div className="absolute bottom-4 left-4 right-4 text-center text-white text-sm bg-black/50 py-2 rounded">
+              Click anywhere to close
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
