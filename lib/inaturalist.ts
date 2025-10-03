@@ -14,13 +14,16 @@ export interface FetchObservationsParams {
   lat?: number;
   lng?: number;
   radius?: number;
+  nelat?: number;
+  nelng?: number;
+  swlat?: number;
+  swlng?: number;
 }
 
 export async function fetchMushroomObservations(
   params: FetchObservationsParams = {}
 ): Promise<INaturalistResponse> {
   const defaultParams: FetchObservationsParams = {
-    iconicTaxa: "Fungi",
     qualityGrade: "research",
     photos: true,
     perPage: 50,
@@ -28,6 +31,11 @@ export async function fetchMushroomObservations(
     identifications: "most_agree",
     geoprivacy: "open",
   };
+
+  // Only use iconicTaxa if no specific taxonId is provided
+  if (!params.taxonId) {
+    defaultParams.iconicTaxa = "Fungi";
+  }
 
   const queryParams = new URLSearchParams();
   const mergedParams = { ...defaultParams, ...params };

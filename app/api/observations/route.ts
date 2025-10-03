@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    const params: Record<string, number> = {};
+    const params: Record<string, number | string> = {};
 
     if (searchParams.has("taxonId")) {
       params.taxonId = Number(searchParams.get("taxonId"));
@@ -15,6 +15,20 @@ export async function GET(request: NextRequest) {
     }
     if (searchParams.has("page")) {
       params.page = Number(searchParams.get("page"));
+    }
+
+    // Region bounds
+    if (searchParams.has("nelat")) {
+      params.nelat = Number(searchParams.get("nelat"));
+    }
+    if (searchParams.has("nelng")) {
+      params.nelng = Number(searchParams.get("nelng"));
+    }
+    if (searchParams.has("swlat")) {
+      params.swlat = Number(searchParams.get("swlat"));
+    }
+    if (searchParams.has("swlng")) {
+      params.swlng = Number(searchParams.get("swlng"));
     }
 
     const data = await fetchMushroomObservations(params);

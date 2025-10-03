@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { INaturalistResponse, QuizQuestion } from "@/types/inaturalist";
 import { generateQuizQuestions } from "@/lib/quiz";
 import Image from "next/image";
+import { COMMON_TAXA, REGIONS, QuizFilters } from "@/types/filters";
 
 export default function QuizPage() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -14,6 +15,8 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<QuizFilters>({});
 
   useEffect(() => {
     loadQuiz();
@@ -23,7 +26,24 @@ export default function QuizPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/observations?perPage=50");
+      // Build query params from filters
+      const params = new URLSearchParams({ perPage: "50" });
+
+      if (filters.taxonId) {
+        params.append("taxonId", filters.taxonId.toString());
+      }
+
+      if (filters.region) {
+        const region = REGIONS.find(r => r.id === filters.region);
+        if (region?.bounds) {
+          params.append("nelat", region.bounds.nelat.toString());
+          params.append("nelng", region.bounds.nelng.toString());
+          params.append("swlat", region.bounds.swlat.toString());
+          params.append("swlng", region.bounds.swlng.toString());
+        }
+      }
+
+      const response = await fetch(`/api/observations?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch observations");
 
       const data: INaturalistResponse = await response.json();
@@ -72,6 +92,11 @@ export default function QuizPage() {
     loadQuiz();
   };
 
+  const handleApplyFilters = () => {
+    setShowFilters(false);
+    handleRestart();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -117,10 +142,74 @@ export default function QuizPage() {
         {/* Header */}
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold">🍄 Mushroom ID Quiz</h1>
-          <div className="text-lg">
-            Score: {score} / {questions.length}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              ⚙️ Filters
+            </button>
+            <div className="text-lg">
+              Score: {score} / {questions.length}
+            </div>
           </div>
         </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="mb-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Quiz Filters</h2>
+
+            <div className="space-y-4">
+              {/* Taxa Filter */}
+              <div>
+                <label className="block font-medium mb-2">Mushroom Type</label>
+                <select
+                  value={filters.taxonId || 0}
+                  onChange={(e) => setFilters({ ...filters, taxonId: Number(e.target.value) || undefined })}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-background"
+                >
+                  {COMMON_TAXA.map((taxon) => (
+                    <option key={taxon.id} value={taxon.id}>
+                      {taxon.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Region Filter */}
+              <div>
+                <label className="block font-medium mb-2">Region</label>
+                <select
+                  value={filters.region || "all"}
+                  onChange={(e) => setFilters({ ...filters, region: e.target.value === "all" ? undefined : e.target.value })}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-background"
+                >
+                  {REGIONS.map((region) => (
+                    <option key={region.id} value={region.id}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleApplyFilters}
+                className="flex-1 bg-foreground text-background px-4 py-2 rounded-lg font-medium"
+              >
+                Apply & Start New Quiz
+              </button>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Progress */}
         <div className="mb-6">
