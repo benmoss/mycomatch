@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -8,12 +10,18 @@ export default function Home() {
         </p>
 
         <div className="flex gap-4 justify-center flex-wrap">
-          <button className="bg-foreground text-background px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+          <Link
+            href="/quiz"
+            className="bg-foreground text-background px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+          >
             Start Practice
-          </button>
-          <button className="border border-gray-300 dark:border-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            Learn More
-          </button>
+          </Link>
+          <Link
+            href="/test"
+            className="border border-gray-300 dark:border-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            API Test
+          </Link>
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
