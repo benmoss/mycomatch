@@ -45,6 +45,10 @@ export function generateQuizQuestion(
     id: Date.now(),
     photoUrl: correctObservation.photos[0].url.replace("square", "large"),
     photoAttribution: correctObservation.photos[0].attribution,
+    photos: correctObservation.photos.map(photo => ({
+      ...photo,
+      url: photo.url.replace("square", "large"),
+    })),
     correctAnswer,
     options,
     observationId: correctObservation.id,

@@ -17,6 +17,7 @@ export default function QuizPage() {
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<QuizFilters>({});
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   useEffect(() => {
     loadQuiz();
@@ -81,6 +82,7 @@ export default function QuizPage() {
       setSelectedAnswer(null);
       setIsAnswered(false);
       setIsImageZoomed(false);
+      setCurrentPhotoIndex(0);
     }
   };
 
@@ -229,21 +231,61 @@ export default function QuizPage() {
 
         {/* Question */}
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
-          {/* Image */}
-          <div
-            className="relative w-full h-96 mb-6 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-zoom-in hover:opacity-90 transition-opacity"
-            onClick={() => setIsImageZoomed(true)}
-          >
-            <Image
-              src={currentQuestion.photoUrl}
-              alt="Mushroom to identify"
-              fill
-              className="object-contain"
-              priority
-            />
-            <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-              🔍 Click to zoom
+          {/* Image Carousel */}
+          <div className="relative mb-6">
+            <div
+              className="relative w-full h-96 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-zoom-in hover:opacity-90 transition-opacity"
+              onClick={() => setIsImageZoomed(true)}
+            >
+              <Image
+                src={currentQuestion.photos[currentPhotoIndex]?.url || currentQuestion.photoUrl}
+                alt="Mushroom to identify"
+                fill
+                className="object-contain"
+                priority
+              />
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                🔍 Click to zoom
+              </div>
+              {currentQuestion.photos.length > 1 && (
+                <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                  {currentPhotoIndex + 1} / {currentQuestion.photos.length}
+                </div>
+              )}
             </div>
+
+            {/* Photo Navigation */}
+            {currentQuestion.photos.length > 1 && (
+              <div className="flex justify-center gap-2 mt-3">
+                <button
+                  onClick={() => setCurrentPhotoIndex(Math.max(0, currentPhotoIndex - 1))}
+                  disabled={currentPhotoIndex === 0}
+                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded disabled:opacity-50"
+                >
+                  ← Prev
+                </button>
+                <div className="flex gap-1 items-center">
+                  {currentQuestion.photos.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPhotoIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentPhotoIndex
+                          ? "bg-foreground w-6"
+                          : "bg-gray-300 dark:bg-gray-600"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCurrentPhotoIndex(Math.min(currentQuestion.photos.length - 1, currentPhotoIndex + 1))}
+                  disabled={currentPhotoIndex === currentQuestion.photos.length - 1}
+                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded disabled:opacity-50"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
 
           <p className="text-lg font-medium mb-4">What species is this?</p>
@@ -344,12 +386,16 @@ export default function QuizPage() {
       {/* Image Zoom Modal */}
       {isImageZoomed && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setIsImageZoomed(false)}
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsImageZoomed(false);
+            }
+          }}
         >
           <div className="relative w-full h-full max-w-6xl max-h-[90vh]">
             <Image
-              src={currentQuestion.photoUrl}
+              src={currentQuestion.photos[currentPhotoIndex]?.url || currentQuestion.photoUrl}
               alt="Mushroom to identify (zoomed)"
               fill
               className="object-contain"
@@ -357,13 +403,39 @@ export default function QuizPage() {
             />
             <button
               onClick={() => setIsImageZoomed(false)}
-              className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm"
+              className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
             >
               ✕ Close
             </button>
-            <div className="absolute bottom-4 left-4 right-4 text-center text-white text-sm bg-black/50 py-2 rounded">
-              Click anywhere to close
-            </div>
+
+            {/* Photo navigation in modal */}
+            {currentQuestion.photos.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentPhotoIndex(Math.max(0, currentPhotoIndex - 1));
+                  }}
+                  disabled={currentPhotoIndex === 0}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm disabled:opacity-50 z-10"
+                >
+                  ← Prev
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentPhotoIndex(Math.min(currentQuestion.photos.length - 1, currentPhotoIndex + 1));
+                  }}
+                  disabled={currentPhotoIndex === currentQuestion.photos.length - 1}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm disabled:opacity-50 z-10"
+                >
+                  Next →
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded text-sm">
+                  {currentPhotoIndex + 1} / {currentQuestion.photos.length}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

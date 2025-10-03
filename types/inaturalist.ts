@@ -35,6 +35,7 @@ export interface QuizQuestion {
   id: number;
   photoUrl: string;
   photoAttribution: string;
+  photos: Photo[]; // Multiple photos from the observation
   correctAnswer: {
     scientificName: string;
     commonName: string;
