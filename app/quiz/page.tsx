@@ -19,6 +19,8 @@ export default function QuizPage() {
   const [filters, setFilters] = useState<QuizFilters>({});
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showLocationHint, setShowLocationHint] = useState(false);
+  const [highlightedAnswer, setHighlightedAnswer] = useState<number | null>(null);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
 
   useEffect(() => {
     // Try to load saved state from localStorage
@@ -91,14 +93,19 @@ export default function QuizPage() {
     }
   };
 
-  const handleAnswerSelect = (optionIndex: number) => {
+  const handleAnswerHighlight = (optionIndex: number) => {
     if (isAnswered) return;
+    setHighlightedAnswer(optionIndex);
+  };
 
-    setSelectedAnswer(optionIndex);
+  const handleAnswerSubmit = () => {
+    if (isAnswered || highlightedAnswer === null) return;
+
+    setSelectedAnswer(highlightedAnswer);
     setIsAnswered(true);
 
     const currentQuestion = questions[currentQuestionIndex];
-    const selectedOption = currentQuestion.options[optionIndex];
+    const selectedOption = currentQuestion.options[highlightedAnswer];
 
     let newScore = score;
     if (selectedOption.taxonId === currentQuestion.correctAnswer.taxonId) {
@@ -115,6 +122,7 @@ export default function QuizPage() {
       const newIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(newIndex);
       setSelectedAnswer(null);
+      setHighlightedAnswer(null);
       setIsAnswered(false);
       setIsImageZoomed(false);
       setCurrentPhotoIndex(0);
@@ -128,6 +136,7 @@ export default function QuizPage() {
   const handleRestart = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
+    setHighlightedAnswer(null);
     setIsAnswered(false);
     setScore(0);
     localStorage.removeItem('quizState');
@@ -138,6 +147,70 @@ export default function QuizPage() {
     setShowFilters(false);
     handleRestart();
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (showFilters || questions.length === 0) return;
+
+      // ? to toggle keyboard shortcuts
+      if (e.key === '?') {
+        setShowKeyboardShortcuts(!showKeyboardShortcuts);
+        return;
+      }
+
+      // Escape to close modals
+      if (e.key === 'Escape') {
+        if (showKeyboardShortcuts) {
+          setShowKeyboardShortcuts(false);
+          return;
+        }
+        if (isImageZoomed) {
+          setIsImageZoomed(false);
+          return;
+        }
+      }
+
+      // Don't trigger shortcuts when modal is open
+      if (showKeyboardShortcuts) return;
+
+      // Z to toggle zoom modal
+      if (e.key === 'z' || e.key === 'Z') {
+        if (isImageZoomed) {
+          setIsImageZoomed(false);
+        } else {
+          setIsImageZoomed(true);
+        }
+        return;
+      }
+
+      // Don't trigger other shortcuts when zoomed
+      if (isImageZoomed) return;
+
+      const currentQ = questions[currentQuestionIndex];
+      const isLast = currentQuestionIndex === questions.length - 1;
+
+      // Number keys 1-4 to highlight answers
+      if (e.key >= '1' && e.key <= '4') {
+        const index = parseInt(e.key) - 1;
+        if (index < currentQ.options.length) {
+          handleAnswerHighlight(index);
+        }
+      }
+
+      // Enter to submit highlighted answer or go to next
+      if (e.key === 'Enter') {
+        if (!isAnswered && highlightedAnswer !== null) {
+          handleAnswerSubmit();
+        } else if (isAnswered && !isLast) {
+          handleNext();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showFilters, isImageZoomed, showKeyboardShortcuts, highlightedAnswer, isAnswered, questions, currentQuestionIndex]);
 
   if (loading) {
     return (
@@ -182,17 +255,25 @@ export default function QuizPage() {
     <div className="min-h-screen p-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">🍄 Mushroom ID Quiz</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              ⚙️ Filters
-            </button>
-            <div className="text-lg">
-              Score: {score} / {questions.length}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <h1 className="text-2xl font-bold">🍄 Mushroom ID Quiz</h1>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowKeyboardShortcuts(true)}
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 underline"
+              >
+                Keyboard shortcuts
+              </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                ⚙️ Filters
+              </button>
+              <div className="text-lg">
+                Score: {score} / {questions.length}
+              </div>
             </div>
           </div>
         </div>
@@ -365,6 +446,7 @@ export default function QuizPage() {
           {/* Options */}
           <div className="space-y-3">
             {currentQuestion.options.map((option, index) => {
+              const isHighlighted = highlightedAnswer === index;
               const isSelected = selectedAnswer === index;
               const isCorrect = option.taxonId === currentQuestion.correctAnswer.taxonId;
               const showCorrect = isAnswered && isCorrect;
@@ -373,26 +455,43 @@ export default function QuizPage() {
               return (
                 <button
                   key={index}
-                  onClick={() => handleAnswerSelect(index)}
+                  onClick={() => handleAnswerHighlight(index)}
                   disabled={isAnswered}
                   className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                     showCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : showWrong
                       ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-                      : isSelected
-                      ? "border-foreground"
+                      : isHighlighted
+                      ? "border-foreground bg-gray-50 dark:bg-gray-800"
                       : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
                   } ${isAnswered ? "cursor-default" : "cursor-pointer"}`}
                 >
-                  <div className="font-medium">{option.commonName}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 italic">
-                    {option.scientificName}
+                  <div className="flex items-start gap-3">
+                    <span className="text-sm font-mono text-gray-500 dark:text-gray-400 mt-0.5">
+                      {index + 1}.
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium">{option.commonName}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 italic">
+                        {option.scientificName}
+                      </div>
+                    </div>
                   </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Submit Button */}
+          {!isAnswered && highlightedAnswer !== null && (
+            <button
+              onClick={handleAnswerSubmit}
+              className="w-full mt-4 bg-foreground text-background px-6 py-3 rounded-lg font-medium"
+            >
+              Submit Answer (or press Enter)
+            </button>
+          )}
 
           {/* Feedback and Navigation */}
           {isAnswered && (
@@ -487,7 +586,7 @@ export default function QuizPage() {
               onClick={() => setIsImageZoomed(false)}
               className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
             >
-              ✕ Close
+              ✕ Close (Esc)
             </button>
 
             {/* Photo navigation in modal */}
@@ -518,6 +617,60 @@ export default function QuizPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Modal */}
+      {showKeyboardShortcuts && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowKeyboardShortcuts(false);
+            }
+          }}
+        >
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">⌨️ Keyboard Shortcuts</h2>
+              <button
+                onClick={() => setShowKeyboardShortcuts(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Select answer</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">1-4</kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Submit answer</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">Enter</kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Zoom image</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">z</kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Close modal</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">Esc</kbd>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-600 dark:text-gray-400">Show this help</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">?</kbd>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowKeyboardShortcuts(false)}
+              className="w-full mt-6 bg-foreground text-background px-4 py-2 rounded-lg font-medium"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
