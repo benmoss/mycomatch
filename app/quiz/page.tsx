@@ -21,8 +21,34 @@ export default function QuizPage() {
   const [showLocationHint, setShowLocationHint] = useState(false);
 
   useEffect(() => {
-    loadQuiz();
+    // Try to load saved state from localStorage
+    const savedState = localStorage.getItem('quizState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setQuestions(state.questions);
+        setCurrentQuestionIndex(state.currentQuestionIndex);
+        setScore(state.score);
+        setFilters(state.filters || {});
+        setLoading(false);
+      } catch (e) {
+        console.error('Failed to load saved quiz state:', e);
+        loadQuiz();
+      }
+    } else {
+      loadQuiz();
+    }
   }, []);
+
+  const saveQuizState = (index: number, currentScore: number) => {
+    const state = {
+      questions,
+      currentQuestionIndex: index,
+      score: currentScore,
+      filters,
+    };
+    localStorage.setItem('quizState', JSON.stringify(state));
+  };
 
   const loadQuiz = async () => {
     setLoading(true);
@@ -56,6 +82,8 @@ export default function QuizPage() {
       }
 
       setQuestions(quizQuestions);
+      // Clear any existing saved state when starting a new quiz
+      localStorage.removeItem('quizState');
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -72,19 +100,28 @@ export default function QuizPage() {
     const currentQuestion = questions[currentQuestionIndex];
     const selectedOption = currentQuestion.options[optionIndex];
 
+    let newScore = score;
     if (selectedOption.taxonId === currentQuestion.correctAnswer.taxonId) {
-      setScore(score + 1);
+      newScore = score + 1;
+      setScore(newScore);
     }
+
+    // Save state after answering
+    saveQuizState(currentQuestionIndex, newScore);
   };
 
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
       setSelectedAnswer(null);
       setIsAnswered(false);
       setIsImageZoomed(false);
       setCurrentPhotoIndex(0);
       setShowLocationHint(false);
+
+      // Save state to localStorage
+      saveQuizState(newIndex, score);
     }
   };
 
@@ -93,6 +130,7 @@ export default function QuizPage() {
     setSelectedAnswer(null);
     setIsAnswered(false);
     setScore(0);
+    localStorage.removeItem('quizState');
     loadQuiz();
   };
 
