@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mushroom ID Practice",
+  title: "MycoMatch",
   description: "Practice identifying mushrooms with real iNaturalist data",
 };
 

@@ -288,7 +288,7 @@ export default function QuizPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
-            <h1 className="text-2xl font-bold">🍄 Mushroom ID Quiz</h1>
+            <h1 className="text-2xl font-bold">🍄 MycoMatch</h1>
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowKeyboardShortcuts(true)}

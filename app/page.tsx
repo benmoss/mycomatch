@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
       <main className="max-w-2xl text-center">
-        <h1 className="text-5xl font-bold mb-4">🍄 Mushroom ID Practice</h1>
+        <h1 className="text-5xl font-bold mb-4">🍄 MycoMatch</h1>
         <p className="text-xl mb-8 text-gray-600 dark:text-gray-400">
           Practice identifying mushrooms with real observations from iNaturalist
         </p>
