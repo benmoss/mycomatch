@@ -419,6 +419,16 @@ export default function QuizPage() {
                   <em>{currentQuestion.correctAnswer.scientificName}</em>
                   {")"}
                 </p>
+                <p className="mt-2">
+                  <a
+                    href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    View observation on iNaturalist →
+                  </a>
+                </p>
               </div>
 
               {isComplete ? (
