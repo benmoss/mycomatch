@@ -232,6 +232,11 @@ export default function QuizPage() {
           handleNext();
         }
       }
+
+      // R to restart quiz (when on last question after answering)
+      if ((e.key === 'r' || e.key === 'R') && isAnswered && isLast) {
+        handleRestart();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -395,8 +400,8 @@ export default function QuizPage() {
                 priority
                 unoptimized
               />
-              <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-                🔍 Click to zoom
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white p-2 rounded">
+                🔍
               </div>
               {currentQuestion.photos.length > 1 && (
                 <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
@@ -412,7 +417,7 @@ export default function QuizPage() {
                   onClick={() => setCurrentPhotoIndex((currentPhotoIndex - 1 + currentQuestion.photos.length) % currentQuestion.photos.length)}
                   className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded"
                 >
-                  ← Prev
+                  ←
                 </button>
                 <div className="flex gap-1 items-center">
                   {currentQuestion.photos.map((_, idx) => (
@@ -431,7 +436,7 @@ export default function QuizPage() {
                   onClick={() => setCurrentPhotoIndex((currentPhotoIndex + 1) % currentQuestion.photos.length)}
                   className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded"
                 >
-                  Next →
+                  →
                 </button>
               </div>
             )}
@@ -517,7 +522,7 @@ export default function QuizPage() {
               onClick={handleAnswerSubmit}
               className="w-full mt-4 bg-foreground text-background px-6 py-3 rounded-lg font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-in fade-in slide-in-from-bottom-2 duration-200"
             >
-              Submit Answer (or press Enter)
+              Submit Answer
             </button>
           )}
 
@@ -569,7 +574,7 @@ export default function QuizPage() {
                   </p>
                   <button
                     onClick={handleRestart}
-                    className="bg-foreground text-background px-6 py-3 rounded-lg font-medium"
+                    className="bg-foreground text-background px-6 py-3 rounded-lg font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Start New Quiz
                   </button>
@@ -596,25 +601,24 @@ export default function QuizPage() {
       {isImageZoomed && (
         <div
           className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setIsImageZoomed(false);
-            }
-          }}
+          onClick={() => setIsImageZoomed(false)}
         >
           <div className="relative w-full h-full max-w-6xl max-h-[90vh] animate-in zoom-in-95 duration-200">
             <Image
               src={currentQuestion.photos[currentPhotoIndex]?.url || currentQuestion.photoUrl}
               alt="Mushroom to identify (zoomed)"
               fill
-              className="object-contain"
+              className="object-contain pointer-events-none"
               priority
             />
             <button
-              onClick={() => setIsImageZoomed(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsImageZoomed(false);
+              }}
               className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
             >
-              ✕ Close (Esc)
+              ✕
             </button>
 
             {/* Photo navigation in modal */}
@@ -627,7 +631,7 @@ export default function QuizPage() {
                   }}
                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
                 >
-                  ← Prev
+                  ←
                 </button>
                 <button
                   onClick={(e) => {
@@ -636,7 +640,7 @@ export default function QuizPage() {
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
                 >
-                  Next →
+                  →
                 </button>
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded text-sm">
                   {currentPhotoIndex + 1} / {currentQuestion.photos.length}
@@ -691,6 +695,10 @@ export default function QuizPage() {
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-400">Close modal</span>
                 <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">Esc</kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Restart quiz</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">r</kbd>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600 dark:text-gray-400">Show this help</span>
