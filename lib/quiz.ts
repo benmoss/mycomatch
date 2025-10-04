@@ -1,6 +1,23 @@
 import { Observation, QuizQuestion } from "@/types/inaturalist";
 
 /**
+ * Normalize common name capitalization to title case
+ * Handles hyphenated words properly (e.g., "jack-o'-lantern" -> "Jack-O'-Lantern")
+ */
+function normalizeCommonName(name: string): string {
+  return name
+    .split(' ')
+    .map(word => {
+      // Handle hyphenated words by capitalizing each part
+      return word
+        .split('-')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join('-');
+    })
+    .join(' ');
+}
+
+/**
  * Generate a quiz question from observations
  * Picks one correct answer and 3 wrong answers from the observations
  */
@@ -24,7 +41,7 @@ export function generateQuizQuestion(
     .slice(0, 3)
     .map((obs) => ({
       scientificName: obs.taxon.name,
-      commonName: obs.taxon.preferred_common_name || obs.taxon.name,
+      commonName: normalizeCommonName(obs.taxon.preferred_common_name || obs.taxon.name),
       taxonId: obs.taxon.id,
     }));
 
@@ -34,7 +51,7 @@ export function generateQuizQuestion(
 
   const correctAnswer = {
     scientificName: correctObservation.taxon.name,
-    commonName: correctObservation.taxon.preferred_common_name || correctObservation.taxon.name,
+    commonName: normalizeCommonName(correctObservation.taxon.preferred_common_name || correctObservation.taxon.name),
     taxonId: correctObservation.taxon.id,
   };
 
