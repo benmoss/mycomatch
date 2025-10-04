@@ -184,11 +184,25 @@ export default function QuizPage() {
         return;
       }
 
-      // Don't trigger other shortcuts when zoomed
-      if (isImageZoomed) return;
-
       const currentQ = questions[currentQuestionIndex];
       const isLast = currentQuestionIndex === questions.length - 1;
+
+      // Arrow keys to navigate photos (works both zoomed and not zoomed)
+      if (e.key === 'ArrowLeft') {
+        if (currentQ.photos.length > 1) {
+          setCurrentPhotoIndex((prev) => (prev - 1 + currentQ.photos.length) % currentQ.photos.length);
+        }
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        if (currentQ.photos.length > 1) {
+          setCurrentPhotoIndex((prev) => (prev + 1) % currentQ.photos.length);
+        }
+        return;
+      }
+
+      // Don't trigger other shortcuts when zoomed
+      if (isImageZoomed) return;
 
       // Number keys 1-4 to highlight answers
       if (e.key >= '1' && e.key <= '4') {
@@ -379,9 +393,8 @@ export default function QuizPage() {
             {currentQuestion.photos.length > 1 && (
               <div className="flex justify-center gap-2 mt-3">
                 <button
-                  onClick={() => setCurrentPhotoIndex(Math.max(0, currentPhotoIndex - 1))}
-                  disabled={currentPhotoIndex === 0}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded disabled:opacity-50"
+                  onClick={() => setCurrentPhotoIndex((currentPhotoIndex - 1 + currentQuestion.photos.length) % currentQuestion.photos.length)}
+                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded"
                 >
                   ← Prev
                 </button>
@@ -399,9 +412,8 @@ export default function QuizPage() {
                   ))}
                 </div>
                 <button
-                  onClick={() => setCurrentPhotoIndex(Math.min(currentQuestion.photos.length - 1, currentPhotoIndex + 1))}
-                  disabled={currentPhotoIndex === currentQuestion.photos.length - 1}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded disabled:opacity-50"
+                  onClick={() => setCurrentPhotoIndex((currentPhotoIndex + 1) % currentQuestion.photos.length)}
+                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded"
                 >
                   Next →
                 </button>
@@ -595,20 +607,18 @@ export default function QuizPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setCurrentPhotoIndex(Math.max(0, currentPhotoIndex - 1));
+                    setCurrentPhotoIndex((currentPhotoIndex - 1 + currentQuestion.photos.length) % currentQuestion.photos.length);
                   }}
-                  disabled={currentPhotoIndex === 0}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm disabled:opacity-50 z-10"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
                 >
                   ← Prev
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setCurrentPhotoIndex(Math.min(currentQuestion.photos.length - 1, currentPhotoIndex + 1));
+                    setCurrentPhotoIndex((currentPhotoIndex + 1) % currentQuestion.photos.length);
                   }}
-                  disabled={currentPhotoIndex === currentQuestion.photos.length - 1}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm disabled:opacity-50 z-10"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm z-10"
                 >
                   Next →
                 </button>
@@ -650,6 +660,13 @@ export default function QuizPage() {
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-400">Submit answer</span>
                 <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">Enter</kbd>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Navigate photos</span>
+                <div className="flex gap-1">
+                  <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">←</kbd>
+                  <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">→</kbd>
+                </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-400">Zoom image</span>
