@@ -22,6 +22,13 @@ export default function QuizPage() {
   const [highlightedAnswer, setHighlightedAnswer] = useState<number | null>(null);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [speciesInfo, setSpeciesInfo] = useState<{
+    title: string;
+    extract: string;
+    thumbnail?: string;
+    url: string;
+  } | null>(null);
+  const [loadingSpeciesInfo, setLoadingSpeciesInfo] = useState(false);
 
   useEffect(() => {
     // Try to load saved state from localStorage
@@ -94,6 +101,24 @@ export default function QuizPage() {
     }
   };
 
+  const fetchSpeciesInfo = async (scientificName: string) => {
+    setLoadingSpeciesInfo(true);
+    try {
+      const response = await fetch(`/api/species-info?name=${encodeURIComponent(scientificName)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSpeciesInfo(data);
+      } else {
+        setSpeciesInfo(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch species info:", error);
+      setSpeciesInfo(null);
+    } finally {
+      setLoadingSpeciesInfo(false);
+    }
+  };
+
   const handleAnswerHighlight = (optionIndex: number) => {
     if (isAnswered) return;
     setHighlightedAnswer(optionIndex);
@@ -114,6 +139,9 @@ export default function QuizPage() {
       setScore(newScore);
     }
 
+    // Fetch species info for the correct answer
+    fetchSpeciesInfo(currentQuestion.correctAnswer.scientificName);
+
     // Save state after answering
     saveQuizState(currentQuestionIndex, newScore);
   };
@@ -133,6 +161,7 @@ export default function QuizPage() {
         setIsImageZoomed(false);
         setCurrentPhotoIndex(0);
         setShowLocationHint(false);
+        setSpeciesInfo(null);
 
         // Save state to localStorage
         saveQuizState(newIndex, score);
@@ -529,39 +558,50 @@ export default function QuizPage() {
           {/* Feedback and Navigation */}
           {isAnswered && (
             <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div
-                className={`p-4 rounded-lg mb-4 ${
-                  selectedAnswer !== null &&
-                  currentQuestion.options[selectedAnswer].taxonId ===
-                    currentQuestion.correctAnswer.taxonId
-                    ? "bg-green-50 dark:bg-green-900/20 border border-green-500"
-                    : "bg-red-50 dark:bg-red-900/20 border border-red-500"
-                }`}
-              >
-                <p className="font-bold mb-2">
-                  {selectedAnswer !== null &&
-                  currentQuestion.options[selectedAnswer].taxonId ===
-                    currentQuestion.correctAnswer.taxonId
-                    ? "✓ Correct!"
-                    : "✗ Incorrect"}
-                </p>
-                <p>
-                  The correct answer is: <strong>{currentQuestion.correctAnswer.commonName}</strong>
-                  {" ("}
-                  <em>{currentQuestion.correctAnswer.scientificName}</em>
-                  {")"}
-                </p>
-                <p className="mt-2">
+              {/* Species Info Card */}
+              {loadingSpeciesInfo && (
+                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading species information...</p>
+                </div>
+              )}
+
+              {speciesInfo && (
+                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <h3 className="font-bold text-lg mb-2">{speciesInfo.title}</h3>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{speciesInfo.extract}</p>
+                  <div className="flex gap-3 text-sm">
+                    <a
+                      href={speciesInfo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Read more on Wikipedia →
+                    </a>
+                    <a
+                      href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View on iNaturalist →
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {!loadingSpeciesInfo && !speciesInfo && (
+                <div className="mb-4">
                   <a
                     href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
                   >
                     View observation on iNaturalist →
                   </a>
-                </p>
-              </div>
+                </div>
+              )}
 
               {isComplete ? (
                 <div className="text-center">
