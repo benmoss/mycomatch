@@ -21,6 +21,7 @@ export default function QuizPage() {
   const [showLocationHint, setShowLocationHint] = useState(false);
   const [highlightedAnswer, setHighlightedAnswer] = useState<number | null>(null);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     // Try to load saved state from localStorage
@@ -119,17 +120,28 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      const newIndex = currentQuestionIndex + 1;
-      setCurrentQuestionIndex(newIndex);
-      setSelectedAnswer(null);
-      setHighlightedAnswer(null);
-      setIsAnswered(false);
-      setIsImageZoomed(false);
-      setCurrentPhotoIndex(0);
-      setShowLocationHint(false);
+      // Start transition animation (fade out)
+      setIsTransitioning(true);
 
-      // Save state to localStorage
-      saveQuizState(newIndex, score);
+      // Wait for fade out, then update content
+      setTimeout(() => {
+        const newIndex = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(newIndex);
+        setSelectedAnswer(null);
+        setHighlightedAnswer(null);
+        setIsAnswered(false);
+        setIsImageZoomed(false);
+        setCurrentPhotoIndex(0);
+        setShowLocationHint(false);
+
+        // Save state to localStorage
+        saveQuizState(newIndex, score);
+
+        // Wait a frame for DOM to update, then fade in
+        requestAnimationFrame(() => {
+          setIsTransitioning(false);
+        });
+      }, 150);
     }
   };
 
@@ -365,7 +377,9 @@ export default function QuizPage() {
         </div>
 
         {/* Question */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
+        <div className={`bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 transition-opacity duration-150 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}>
           {/* Image Carousel */}
           <div className="relative mb-6">
             <div
@@ -373,11 +387,13 @@ export default function QuizPage() {
               onClick={() => setIsImageZoomed(true)}
             >
               <Image
+                key={`${currentQuestionIndex}-${currentPhotoIndex}`}
                 src={currentQuestion.photos[currentPhotoIndex]?.url || currentQuestion.photoUrl}
                 alt="Mushroom to identify"
                 fill
                 className="object-contain"
                 priority
+                unoptimized
               />
               <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
                 🔍 Click to zoom
@@ -469,14 +485,14 @@ export default function QuizPage() {
                   key={index}
                   onClick={() => handleAnswerHighlight(index)}
                   disabled={isAnswered}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-300 ${
                     showCorrect
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                      ? "border-green-500 bg-green-50 dark:bg-green-900/20 scale-[1.02]"
                       : showWrong
-                      ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                      ? "border-red-500 bg-red-50 dark:bg-red-900/20 scale-[0.98]"
                       : isHighlighted
                       ? "border-foreground bg-gray-50 dark:bg-gray-800"
-                      : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
+                      : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 hover:scale-[1.01]"
                   } ${isAnswered ? "cursor-default" : "cursor-pointer"}`}
                 >
                   <div className="flex items-start gap-3">
@@ -499,7 +515,7 @@ export default function QuizPage() {
           {!isAnswered && highlightedAnswer !== null && (
             <button
               onClick={handleAnswerSubmit}
-              className="w-full mt-4 bg-foreground text-background px-6 py-3 rounded-lg font-medium"
+              className="w-full mt-4 bg-foreground text-background px-6 py-3 rounded-lg font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-in fade-in slide-in-from-bottom-2 duration-200"
             >
               Submit Answer (or press Enter)
             </button>
@@ -507,7 +523,7 @@ export default function QuizPage() {
 
           {/* Feedback and Navigation */}
           {isAnswered && (
-            <div className="mt-6">
+            <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div
                 className={`p-4 rounded-lg mb-4 ${
                   selectedAnswer !== null &&
@@ -579,14 +595,14 @@ export default function QuizPage() {
       {/* Image Zoom Modal */}
       {isImageZoomed && (
         <div
-          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setIsImageZoomed(false);
             }
           }}
         >
-          <div className="relative w-full h-full max-w-6xl max-h-[90vh]">
+          <div className="relative w-full h-full max-w-6xl max-h-[90vh] animate-in zoom-in-95 duration-200">
             <Image
               src={currentQuestion.photos[currentPhotoIndex]?.url || currentQuestion.photoUrl}
               alt="Mushroom to identify (zoomed)"
@@ -634,14 +650,14 @@ export default function QuizPage() {
       {/* Keyboard Shortcuts Modal */}
       {showKeyboardShortcuts && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowKeyboardShortcuts(false);
             }
           }}
         >
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 max-w-md w-full animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">⌨️ Keyboard Shortcuts</h2>
               <button
