@@ -312,27 +312,30 @@ export default function QuizPage() {
   const isComplete = isAnswered && isLastQuestion;
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen p-6 md:p-10">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h1 className="text-2xl font-bold">🍄 MycoMatch</h1>
-            <div className="flex items-center gap-4">
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-3">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-forest tracking-tight">🍄 MycoMatch</h1>
+            <div className="flex items-center gap-3 md:gap-4">
               <button
                 onClick={() => setShowKeyboardShortcuts(true)}
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 underline"
+                className="text-xs md:text-sm text-sage hover:text-forest transition-colors underline decoration-dotted hidden sm:block"
               >
-                Keyboard shortcuts
+                Shortcuts
               </button>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="px-3 md:px-4 py-2 border-2 border-sage/30 text-forest rounded-xl hover:bg-sage/10 hover:border-sage/50 transition-all"
               >
-                ⚙️ Filters
+                <span className="hidden sm:inline">⚙️ Filters</span>
+                <span className="sm:hidden">⚙️</span>
               </button>
-              <div className="text-lg">
-                Score: {score} / {questions.length}
+              <div className="text-base md:text-lg font-medium bg-sand/50 px-3 md:px-4 py-2 rounded-xl border-2 border-moss/20">
+                <span className="text-sage">{score}</span>
+                <span className="text-moss mx-1">/</span>
+                <span className="text-moss">{questions.length}</span>
               </div>
             </div>
           </div>
@@ -340,17 +343,17 @@ export default function QuizPage() {
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="mb-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-bold mb-4">Quiz Filters</h2>
+          <div className="mb-8 bg-sand/30 border-2 border-sage/20 rounded-2xl shadow-xl p-6 md:p-8 backdrop-blur-sm">
+            <h2 className="text-2xl font-serif font-bold text-forest mb-6">Quiz Filters</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Taxa Filter */}
               <div>
-                <label className="block font-medium mb-2">Mushroom Type</label>
+                <label className="block font-medium text-forest mb-2.5">Mushroom Type</label>
                 <select
                   value={filters.taxonId || 0}
                   onChange={(e) => setFilters({ ...filters, taxonId: Number(e.target.value) || undefined })}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-background"
+                  className="w-full p-3 border-2 border-sage/30 rounded-xl bg-background text-foreground focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 outline-none transition-all"
                 >
                   {COMMON_TAXA.map((taxon) => (
                     <option key={taxon.id} value={taxon.id}>
@@ -362,11 +365,11 @@ export default function QuizPage() {
 
               {/* Region Filter */}
               <div>
-                <label className="block font-medium mb-2">Region</label>
+                <label className="block font-medium text-forest mb-2.5">Region</label>
                 <select
                   value={filters.region || "all"}
                   onChange={(e) => setFilters({ ...filters, region: e.target.value === "all" ? undefined : e.target.value })}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-background"
+                  className="w-full p-3 border-2 border-sage/30 rounded-xl bg-background text-foreground focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 outline-none transition-all"
                 >
                   {REGIONS.map((region) => (
                     <option key={region.id} value={region.id}>
@@ -377,16 +380,16 @@ export default function QuizPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-8 flex gap-3">
               <button
                 onClick={handleApplyFilters}
-                className="flex-1 bg-foreground text-background px-4 py-2 rounded-lg font-medium"
+                className="flex-1 bg-terracotta hover:bg-clay text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 Apply & Start New Quiz
               </button>
               <button
                 onClick={() => setShowFilters(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg"
+                className="px-6 py-3 border-2 border-sage/30 text-forest rounded-xl hover:bg-sage/10 transition-all"
               >
                 Cancel
               </button>
@@ -395,29 +398,29 @@ export default function QuizPage() {
         )}
 
         {/* Progress */}
-        <div className="mb-6">
-          <div className="flex justify-between text-sm mb-2">
-            <span>
+        <div className="mb-8">
+          <div className="flex justify-between text-sm font-medium mb-3">
+            <span className="text-forest">
               Question {currentQuestionIndex + 1} of {questions.length}
             </span>
-            <span>{Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%</span>
+            <span className="text-sage">{Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-sand/60 rounded-full h-3 shadow-inner">
             <div
-              className="bg-foreground h-2 rounded-full transition-all"
+              className="bg-gradient-to-r from-sage to-forest h-3 rounded-full transition-all duration-500 shadow-sm"
               style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Question */}
-        <div className={`bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 transition-opacity duration-150 ${
+        <div className={`bg-white dark:bg-gray-900/50 rounded-2xl shadow-2xl border-2 border-sage/10 p-6 md:p-8 transition-opacity duration-150 ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}>
           {/* Image Carousel */}
-          <div className="relative mb-6">
+          <div className="relative mb-8">
             <div
-              className="relative w-full h-96 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-zoom-in hover:opacity-90 transition-opacity"
+              className="relative w-full h-96 md:h-[28rem] rounded-2xl overflow-hidden bg-sand/30 cursor-zoom-in hover:shadow-2xl transition-all border-2 border-sage/20"
               onClick={() => setIsImageZoomed(true)}
             >
               <Image
@@ -429,11 +432,11 @@ export default function QuizPage() {
                 priority
                 unoptimized
               />
-              <div className="absolute bottom-2 right-2 bg-black/50 text-white p-2 rounded">
+              <div className="absolute bottom-3 right-3 bg-forest/80 backdrop-blur-sm text-white p-2.5 rounded-xl shadow-lg">
                 🔍
               </div>
               {currentQuestion.photos.length > 1 && (
-                <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                <div className="absolute bottom-3 left-3 bg-forest/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl text-sm font-medium shadow-lg">
                   {currentPhotoIndex + 1} / {currentQuestion.photos.length}
                 </div>
               )}
@@ -441,29 +444,29 @@ export default function QuizPage() {
 
             {/* Photo Navigation */}
             {currentQuestion.photos.length > 1 && (
-              <div className="flex justify-center gap-2 mt-3">
+              <div className="flex justify-center gap-3 mt-4">
                 <button
                   onClick={() => setCurrentPhotoIndex((currentPhotoIndex - 1 + currentQuestion.photos.length) % currentQuestion.photos.length)}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded"
+                  className="px-4 py-2 border-2 border-sage/30 text-forest rounded-xl hover:bg-sage/10 transition-all"
                 >
                   ←
                 </button>
-                <div className="flex gap-1 items-center">
+                <div className="flex gap-2 items-center">
                   {currentQuestion.photos.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentPhotoIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${
+                      className={`h-2.5 rounded-full transition-all ${
                         idx === currentPhotoIndex
-                          ? "bg-foreground w-6"
-                          : "bg-gray-300 dark:bg-gray-600"
+                          ? "bg-terracotta w-8"
+                          : "bg-sage/40 w-2.5 hover:bg-sage/60"
                       }`}
                     />
                   ))}
                 </div>
                 <button
                   onClick={() => setCurrentPhotoIndex((currentPhotoIndex + 1) % currentQuestion.photos.length)}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded"
+                  className="px-4 py-2 border-2 border-sage/30 text-forest rounded-xl hover:bg-sage/10 transition-all"
                 >
                   →
                 </button>
@@ -471,26 +474,26 @@ export default function QuizPage() {
             )}
           </div>
 
-          <p className="text-lg font-medium mb-4">What species is this?</p>
+          <p className="text-xl md:text-2xl font-serif font-semibold text-forest mb-6">What species is this?</p>
 
           {/* Location Hint */}
           {!isAnswered && currentQuestion.location && (
-            <div className="mb-4">
+            <div className="mb-6">
               <button
                 onClick={() => setShowLocationHint(!showLocationHint)}
-                className="w-full text-left p-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex justify-between items-center"
+                className="w-full text-left p-4 border-2 border-sage/30 rounded-xl hover:bg-sand/20 transition-all flex justify-between items-center group"
               >
-                <span className="font-medium">
-                  {showLocationHint ? "🗺️ Hide Location" : "🗺️ Show Location"}
+                <span className="font-medium text-forest group-hover:text-terracotta transition-colors">
+                  {showLocationHint ? "🗺️ Hide Location" : "🗺️ Show Location Hint"}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sage">
                   {showLocationHint ? "▲" : "▼"}
                 </span>
               </button>
 
               {showLocationHint && (
-                <div className="mt-3 border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 dark:bg-gray-800 p-2 text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-4 border-2 border-sage/20 rounded-xl overflow-hidden shadow-lg">
+                  <div className="bg-sand/40 p-3 text-sm font-medium text-forest">
                     📍 {currentQuestion.location.place}
                   </div>
                   <iframe
@@ -519,23 +522,23 @@ export default function QuizPage() {
                   key={index}
                   onClick={() => handleAnswerHighlight(index)}
                   disabled={isAnswered}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-300 ${
+                  className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-300 ${
                     showCorrect
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20 scale-[1.02]"
+                      ? "border-sage bg-sage/10 shadow-lg shadow-sage/20 scale-[1.02]"
                       : showWrong
-                      ? "border-red-500 bg-red-50 dark:bg-red-900/20 scale-[0.98]"
+                      ? "border-terracotta bg-terracotta/10 shadow-lg shadow-terracotta/20 scale-[0.98]"
                       : isHighlighted
-                      ? "border-foreground bg-gray-50 dark:bg-gray-800"
-                      : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 hover:scale-[1.01]"
+                      ? "border-terracotta bg-sand/30 shadow-lg"
+                      : "border-sage/30 hover:border-sage/50 hover:bg-sand/20 hover:scale-[1.01]"
                   } ${isAnswered ? "cursor-default" : "cursor-pointer"}`}
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="text-sm font-mono text-gray-500 dark:text-gray-400 mt-0.5">
-                      {index + 1}.
+                  <div className="flex items-start gap-4">
+                    <span className="text-sm font-bold text-sage mt-0.5 bg-sand/50 w-7 h-7 rounded-full flex items-center justify-center">
+                      {index + 1}
                     </span>
                     <div className="flex-1">
-                      <div className="font-medium">{option.commonName}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 italic">
+                      <div className="font-semibold text-forest text-lg">{option.commonName}</div>
+                      <div className="text-sm text-sage/80 font-serif italic mt-1">
                         {option.scientificName}
                       </div>
                     </div>
@@ -549,7 +552,7 @@ export default function QuizPage() {
           {!isAnswered && highlightedAnswer !== null && (
             <button
               onClick={handleAnswerSubmit}
-              className="w-full mt-4 bg-foreground text-background px-6 py-3 rounded-lg font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-in fade-in slide-in-from-bottom-2 duration-200"
+              className="w-full mt-6 bg-terracotta hover:bg-clay text-white px-6 py-4 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-in fade-in slide-in-from-bottom-2 duration-200"
             >
               Submit Answer
             </button>
@@ -557,24 +560,24 @@ export default function QuizPage() {
 
           {/* Feedback and Navigation */}
           {isAnswered && (
-            <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Species Info Card */}
               {loadingSpeciesInfo && (
-                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading species information...</p>
+                <div className="mb-6 p-5 bg-sand/30 border-2 border-sage/20 rounded-xl">
+                  <p className="text-sm text-forest">Loading species information...</p>
                 </div>
               )}
 
               {speciesInfo && (
-                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <h3 className="font-bold text-lg mb-2">{speciesInfo.title}</h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{speciesInfo.extract}</p>
-                  <div className="flex gap-3 text-sm">
+                <div className="mb-6 p-6 bg-sand/30 border-2 border-sage/20 rounded-xl">
+                  <h3 className="font-serif font-bold text-xl text-forest mb-3">{speciesInfo.title}</h3>
+                  <p className="text-sm leading-relaxed text-forest/80 mb-4">{speciesInfo.extract}</p>
+                  <div className="flex flex-wrap gap-3 text-sm">
                     <a
                       href={speciesInfo.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-terracotta hover:text-clay font-medium hover:underline transition-colors"
                     >
                       Read more on Wikipedia →
                     </a>
@@ -582,7 +585,7 @@ export default function QuizPage() {
                       href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-terracotta hover:text-clay font-medium hover:underline transition-colors"
                     >
                       View on iNaturalist →
                     </a>
@@ -591,12 +594,12 @@ export default function QuizPage() {
               )}
 
               {!loadingSpeciesInfo && !speciesInfo && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <a
                     href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+                    className="text-terracotta hover:text-clay font-medium hover:underline text-sm transition-colors"
                   >
                     View observation on iNaturalist →
                   </a>
@@ -605,16 +608,16 @@ export default function QuizPage() {
 
               {isComplete ? (
                 <div className="text-center">
-                  <p className="text-2xl font-bold mb-4">
+                  <p className="text-3xl font-serif font-bold text-forest mb-4">
                     Quiz Complete! 🎉
                   </p>
-                  <p className="text-xl mb-6">
-                    Final Score: {score} / {questions.length} (
-                    {Math.round((score / questions.length) * 100)}%)
+                  <p className="text-xl text-sage mb-8">
+                    Final Score: <span className="font-bold text-terracotta">{score}</span> / {questions.length}
+                    <span className="text-moss ml-2">({Math.round((score / questions.length) * 100)}%)</span>
                   </p>
                   <button
                     onClick={handleRestart}
-                    className="bg-foreground text-background px-6 py-3 rounded-lg font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="bg-terracotta hover:bg-clay text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Start New Quiz
                   </button>
@@ -622,9 +625,9 @@ export default function QuizPage() {
               ) : (
                 <button
                   onClick={handleNext}
-                  className="w-full bg-foreground text-background px-6 py-3 rounded-lg font-medium"
+                  className="w-full bg-forest hover:bg-sage text-white px-6 py-4 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Next Question
+                  Next Question →
                 </button>
               )}
             </div>
@@ -632,16 +635,16 @@ export default function QuizPage() {
         </div>
 
         {/* Photo Attribution */}
-        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+        <div className="mt-6 p-4 bg-sand/20 rounded-xl border-2 border-sage/10">
+          <p className="text-xs text-forest/70 text-center font-medium">
             📷 Photo by {currentQuestion.photoAttribution} • Licensed under Creative Commons
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 text-center mt-1">
+          <p className="text-xs text-sage/70 text-center mt-1.5">
             <a
               href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline"
+              className="hover:text-terracotta transition-colors hover:underline"
             >
               View source on iNaturalist
             </a>
@@ -706,61 +709,61 @@ export default function QuizPage() {
       {/* Keyboard Shortcuts Modal */}
       {showKeyboardShortcuts && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-forest/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowKeyboardShortcuts(false);
             }
           }}
         >
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 max-w-md w-full animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">⌨️ Keyboard Shortcuts</h2>
+          <div className="bg-background border-2 border-sage/20 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-serif font-bold text-forest">⌨️ Keyboard Shortcuts</h2>
               <button
                 onClick={() => setShowKeyboardShortcuts(false)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="text-sage hover:text-terracotta transition-colors text-xl"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Select answer</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">1-4</kbd>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b-2 border-sage/10">
+                <span className="text-forest/80">Select answer</span>
+                <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">1-4</kbd>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Submit answer</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">Enter</kbd>
+              <div className="flex justify-between items-center py-3 border-b-2 border-sage/10">
+                <span className="text-forest/80">Submit answer</span>
+                <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">Enter</kbd>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Navigate photos</span>
-                <div className="flex gap-1">
-                  <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">←</kbd>
-                  <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">→</kbd>
+              <div className="flex justify-between items-center py-3 border-b-2 border-sage/10">
+                <span className="text-forest/80">Navigate photos</span>
+                <div className="flex gap-2">
+                  <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">←</kbd>
+                  <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">→</kbd>
                 </div>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Zoom image</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">z</kbd>
+              <div className="flex justify-between items-center py-3 border-b-2 border-sage/10">
+                <span className="text-forest/80">Zoom image</span>
+                <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">z</kbd>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Close modal</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">Esc</kbd>
+              <div className="flex justify-between items-center py-3 border-b-2 border-sage/10">
+                <span className="text-forest/80">Close modal</span>
+                <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">Esc</kbd>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Restart quiz</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">r</kbd>
+              <div className="flex justify-between items-center py-3 border-b-2 border-sage/10">
+                <span className="text-forest/80">Restart quiz</span>
+                <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">r</kbd>
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600 dark:text-gray-400">Show this help</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-sm">?</kbd>
+              <div className="flex justify-between items-center py-3">
+                <span className="text-forest/80">Show this help</span>
+                <kbd className="px-3 py-1.5 bg-sand/40 border-2 border-sage/20 rounded-lg font-mono text-sm text-forest">?</kbd>
               </div>
             </div>
 
             <button
               onClick={() => setShowKeyboardShortcuts(false)}
-              className="w-full mt-6 bg-foreground text-background px-4 py-2 rounded-lg font-medium"
+              className="w-full mt-8 bg-terracotta hover:bg-clay text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Close
             </button>
