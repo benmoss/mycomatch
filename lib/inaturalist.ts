@@ -11,6 +11,7 @@ export interface FetchObservationsParams {
   page?: number;
   identifications?: string;
   geoprivacy?: string;
+  photoLicense?: string;
   lat?: number;
   lng?: number;
   radius?: number;
@@ -30,6 +31,8 @@ export async function fetchMushroomObservations(
     page: 1,
     identifications: "most_agree",
     geoprivacy: "open",
+    // Only use photos with permissive Creative Commons licenses
+    photoLicense: "cc-by,cc-by-nc,cc-by-sa,cc-by-nc-sa,cc0",
   };
 
   // Only use iconicTaxa if no specific taxonId is provided
@@ -46,6 +49,7 @@ export async function fetchMushroomObservations(
     iconicTaxa: "iconic_taxa",
     qualityGrade: "quality_grade",
     perPage: "per_page",
+    photoLicense: "photo_license",
   };
 
   Object.entries(mergedParams).forEach(([key, value]) => {

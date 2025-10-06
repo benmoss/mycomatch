@@ -632,9 +632,21 @@ export default function QuizPage() {
         </div>
 
         {/* Photo Attribution */}
-        <p className="text-xs text-gray-500 mt-4 text-center">
-          Photo: {currentQuestion.photoAttribution} (via iNaturalist)
-        </p>
+        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+            📷 Photo by {currentQuestion.photoAttribution} • Licensed under Creative Commons
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-500 text-center mt-1">
+            <a
+              href={`https://www.inaturalist.org/observations/${currentQuestion.observationId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              View source on iNaturalist
+            </a>
+          </p>
+        </div>
       </div>
 
       {/* Image Zoom Modal */}

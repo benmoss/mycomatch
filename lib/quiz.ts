@@ -36,14 +36,24 @@ export function generateQuizQuestion(
   }
 
   // Get 3 other unique species for wrong answers
-  const wrongAnswers = observations
-    .filter((obs, idx) => idx !== correctIndex && obs.taxon.id !== correctObservation.taxon.id)
-    .slice(0, 3)
-    .map((obs) => ({
-      scientificName: obs.taxon.name,
-      commonName: normalizeCommonName(obs.taxon.preferred_common_name || obs.taxon.name),
-      taxonId: obs.taxon.id,
-    }));
+  const seenTaxonIds = new Set<number>([correctObservation.taxon.id]);
+  const wrongAnswers: Array<{
+    scientificName: string;
+    commonName: string;
+    taxonId: number;
+  }> = [];
+
+  for (const obs of observations) {
+    if (wrongAnswers.length >= 3) break;
+    if (!seenTaxonIds.has(obs.taxon.id)) {
+      seenTaxonIds.add(obs.taxon.id);
+      wrongAnswers.push({
+        scientificName: obs.taxon.name,
+        commonName: normalizeCommonName(obs.taxon.preferred_common_name || obs.taxon.name),
+        taxonId: obs.taxon.id,
+      });
+    }
+  }
 
   if (wrongAnswers.length < 3) {
     return null;
