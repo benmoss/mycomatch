@@ -66,12 +66,21 @@ function defaultStorage(): Storage | undefined {
   return typeof window === "undefined" ? undefined : window.localStorage;
 }
 
-export function loadProgress(storage: Storage | undefined = defaultStorage()): ProgressStore {
+export function loadProgress(storage?: Storage): ProgressStore {
   try {
-    const raw = storage?.getItem(STORAGE_KEY);
+    const raw = (storage ?? defaultStorage())?.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    if (!parsed || typeof parsed !== "object") return {};
+    // Keep only well-formed entries so a bad one can't break quiz building
+    const store: ProgressStore = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const p = value as SpeciesProgress;
+      if (p && typeof p.tier === "number" && typeof p.lastSeen === "string" && typeof p.taxonId === "number") {
+        store[Number(key)] = { ...p, confusions: p.confusions ?? {} };
+      }
+    }
+    return store;
   } catch {
     return {};
   }
@@ -79,18 +88,18 @@ export function loadProgress(storage: Storage | undefined = defaultStorage()): P
 
 export function saveProgress(
   store: ProgressStore,
-  storage: Storage | undefined = defaultStorage()
+  storage?: Storage
 ): void {
   try {
-    storage?.setItem(STORAGE_KEY, JSON.stringify(store));
+    (storage ?? defaultStorage())?.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
     // Storage unavailable (private mode, quota): progress just won't persist
   }
 }
 
-export function resetProgress(storage: Storage | undefined = defaultStorage()): void {
+export function resetProgress(storage?: Storage): void {
   try {
-    storage?.removeItem(STORAGE_KEY);
+    (storage ?? defaultStorage())?.removeItem(STORAGE_KEY);
   } catch {
     // Nothing to reset if storage is unavailable
   }

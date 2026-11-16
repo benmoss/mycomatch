@@ -30,11 +30,11 @@ function isSession(value: unknown): value is QuizSession {
 }
 
 /** Load the in-progress quiz, or null if there is none or it's unreadable */
-export function loadSession(storage: Storage | undefined = defaultStorage()): QuizSession | null {
+export function loadSession(storage?: Storage): QuizSession | null {
   try {
     // Quizzes saved before the mastery ramp have an incompatible shape
-    storage?.removeItem(LEGACY_KEY);
-    const raw = storage?.getItem(STORAGE_KEY);
+    (storage ?? defaultStorage())?.removeItem(LEGACY_KEY);
+    const raw = (storage ?? defaultStorage())?.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return isSession(parsed) ? parsed : null;
@@ -43,17 +43,17 @@ export function loadSession(storage: Storage | undefined = defaultStorage()): Qu
   }
 }
 
-export function saveSession(session: QuizSession, storage: Storage | undefined = defaultStorage()): void {
+export function saveSession(session: QuizSession, storage?: Storage): void {
   try {
-    storage?.setItem(STORAGE_KEY, JSON.stringify(session));
+    (storage ?? defaultStorage())?.setItem(STORAGE_KEY, JSON.stringify(session));
   } catch {
     // Storage unavailable: the quiz just won't resume after a reload
   }
 }
 
-export function clearSession(storage: Storage | undefined = defaultStorage()): void {
+export function clearSession(storage?: Storage): void {
   try {
-    storage?.removeItem(STORAGE_KEY);
+    (storage ?? defaultStorage())?.removeItem(STORAGE_KEY);
   } catch {
     // Nothing to clear if storage is unavailable
   }

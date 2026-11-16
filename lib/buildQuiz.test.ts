@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { buildQuiz, QuizDeps } from "@/lib/buildQuiz";
+import { describe, expect, it, vi } from "vitest";
+import { buildQuiz, LOOKALIKE_TIMEOUT_MS, QuizDeps } from "@/lib/buildQuiz";
 import { Observation } from "@/types/inaturalist";
 import { Lookalike, PoolSpecies, ProgressStore, SpeciesProgress, Tier } from "@/types/quiz";
 import { seeded } from "@/test/helpers";
@@ -130,5 +130,35 @@ describe("buildQuiz", () => {
     const q1 = questions.find((q) => q.correctAnswer.taxonId === 1)!;
     expect(q1.usedTier).toBe(2);
     expect(q1.options.map((o) => o.taxonId)).toContain(500);
+  });
+
+  it("doesn't wait on a hung look-alike request", async () => {
+    vi.useFakeTimers();
+    try {
+      const store: ProgressStore = { 1: progress(1, 2) };
+      const { deps: d } = deps(range(10).map(sp), {
+        fetchLookalikes: () => new Promise<Lookalike[]>(() => {}),
+      });
+      const pending = buildQuiz({}, store, d);
+      await vi.advanceTimersByTimeAsync(LOOKALIKE_TIMEOUT_MS);
+      const questions = await pending;
+      expect(questions.find((q) => q.correctAnswer.taxonId === 1)?.usedTier).toBeLessThan(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("requests photos without waiting for look-alikes", async () => {
+    const store: ProgressStore = { 1: progress(1, 2) };
+    let releaseLookalikes: (l: Lookalike[]) => void = () => {};
+    const { deps: d, calls } = deps(range(10).map(sp), {
+      fetchLookalikes: () => new Promise<Lookalike[]>((resolve) => (releaseLookalikes = resolve)),
+    });
+    const pending = buildQuiz({}, store, d);
+    await new Promise((r) => setTimeout(r, 0));
+    const photosBeforeLookalikes = calls.photos;
+    releaseLookalikes([]);
+    await pending;
+    expect(photosBeforeLookalikes).toBe(1);
   });
 });

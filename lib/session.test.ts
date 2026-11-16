@@ -65,3 +65,22 @@ describe("quiz session", () => {
     expect(loadSession(storage)).toBeNull();
   });
 });
+
+describe("quiz session storage access throwing", () => {
+  it("survives window.localStorage throwing on access", () => {
+    const g = globalThis as { window?: unknown };
+    const original = g.window;
+    g.window = {
+      get localStorage(): Storage {
+        throw new Error("SecurityError");
+      },
+    };
+    try {
+      expect(loadSession()).toBeNull();
+      expect(() => saveSession(session)).not.toThrow();
+      expect(() => clearSession()).not.toThrow();
+    } finally {
+      g.window = original;
+    }
+  });
+});

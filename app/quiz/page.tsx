@@ -124,7 +124,7 @@ export default function QuizPage() {
   };
 
   const handleAnswerSubmit = () => {
-    if (isAnswered || highlightedAnswer === null) return;
+    if (loading || isAnswered || highlightedAnswer === null) return;
 
     setSelectedAnswer(highlightedAnswer);
     setIsAnswered(true);
@@ -186,6 +186,9 @@ export default function QuizPage() {
   };
 
   const handleRestart = () => {
+    setQuestions([]);
+    setAnswers({});
+    setPromoted([]);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setHighlightedAnswer(null);
@@ -209,7 +212,7 @@ export default function QuizPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showFilters || questions.length === 0) return;
+      if (loading || error || showFilters || questions.length === 0) return;
 
       // ? to toggle keyboard shortcuts
       if (e.key === '?') {
@@ -287,7 +290,69 @@ export default function QuizPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showFilters, isImageZoomed, showKeyboardShortcuts, highlightedAnswer, isAnswered, questions, currentQuestionIndex, answers, promoted, score]);
+  }, [loading, error, showFilters, isImageZoomed, showKeyboardShortcuts, highlightedAnswer, isAnswered, questions, currentQuestionIndex, answers, promoted, score]);
+
+  const filtersPanel = (
+    <div className="mb-8 bg-sand/30 border-2 border-sage/20 rounded-2xl shadow-xl p-6 md:p-8 backdrop-blur-sm">
+      <h2 className="text-2xl font-serif font-bold text-forest mb-6">Quiz Filters</h2>
+
+      <div className="space-y-5">
+        {/* Taxa Filter */}
+        <div>
+          <label className="block font-medium text-forest mb-2.5">Mushroom Type</label>
+          <select
+            value={filters.taxonId || 0}
+            onChange={(e) => setFilters({ ...filters, taxonId: Number(e.target.value) || undefined })}
+            className="w-full p-3 border-2 border-sage/30 rounded-xl bg-background text-foreground focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 outline-none transition-all"
+          >
+            {COMMON_TAXA.map((taxon) => (
+              <option key={taxon.id} value={taxon.id}>
+                {taxon.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Region Filter */}
+        <div>
+          <label className="block font-medium text-forest mb-2.5">Region</label>
+          <select
+            value={filters.region || "all"}
+            onChange={(e) => setFilters({ ...filters, region: e.target.value === "all" ? undefined : e.target.value })}
+            className="w-full p-3 border-2 border-sage/30 rounded-xl bg-background text-foreground focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 outline-none transition-all"
+          >
+            {REGIONS.map((region) => (
+              <option key={region.id} value={region.id}>
+                {region.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="mt-8 flex gap-3">
+        <button
+          onClick={handleApplyFilters}
+          className="flex-1 bg-terracotta hover:bg-clay text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Apply & Start New Quiz
+        </button>
+        <button
+          onClick={() => setShowFilters(false)}
+          className="px-6 py-3 border-2 border-sage/30 text-forest rounded-xl hover:bg-sage/10 transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <button
+        onClick={handleResetProgress}
+        className="mt-5 text-sm text-sage hover:text-terracotta underline decoration-dotted transition-colors"
+      >
+        Reset progress
+      </button>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -303,14 +368,23 @@ export default function QuizPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-md text-center">
+        <div className="max-w-xl w-full text-center">
           <p className="text-red-500 mb-4">Error: {error}</p>
-          <button
-            onClick={loadQuiz}
-            className="bg-foreground text-background px-6 py-3 rounded-lg"
-          >
-            Try Again
-          </button>
+          <div className="flex gap-3 justify-center mb-8">
+            <button
+              onClick={loadQuiz}
+              className="bg-foreground text-background px-6 py-3 rounded-lg"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-6 py-3 border-2 border-sage/30 text-forest rounded-lg hover:bg-sage/10 transition-all"
+            >
+              Change Filters
+            </button>
+          </div>
+          {showFilters && <div className="text-left">{filtersPanel}</div>}
         </div>
       </div>
     );
@@ -361,68 +435,7 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="mb-8 bg-sand/30 border-2 border-sage/20 rounded-2xl shadow-xl p-6 md:p-8 backdrop-blur-sm">
-            <h2 className="text-2xl font-serif font-bold text-forest mb-6">Quiz Filters</h2>
-
-            <div className="space-y-5">
-              {/* Taxa Filter */}
-              <div>
-                <label className="block font-medium text-forest mb-2.5">Mushroom Type</label>
-                <select
-                  value={filters.taxonId || 0}
-                  onChange={(e) => setFilters({ ...filters, taxonId: Number(e.target.value) || undefined })}
-                  className="w-full p-3 border-2 border-sage/30 rounded-xl bg-background text-foreground focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 outline-none transition-all"
-                >
-                  {COMMON_TAXA.map((taxon) => (
-                    <option key={taxon.id} value={taxon.id}>
-                      {taxon.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Region Filter */}
-              <div>
-                <label className="block font-medium text-forest mb-2.5">Region</label>
-                <select
-                  value={filters.region || "all"}
-                  onChange={(e) => setFilters({ ...filters, region: e.target.value === "all" ? undefined : e.target.value })}
-                  className="w-full p-3 border-2 border-sage/30 rounded-xl bg-background text-foreground focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 outline-none transition-all"
-                >
-                  {REGIONS.map((region) => (
-                    <option key={region.id} value={region.id}>
-                      {region.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={handleApplyFilters}
-                className="flex-1 bg-terracotta hover:bg-clay text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Apply & Start New Quiz
-              </button>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="px-6 py-3 border-2 border-sage/30 text-forest rounded-xl hover:bg-sage/10 transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-
-            <button
-              onClick={handleResetProgress}
-              className="mt-5 text-sm text-sage hover:text-terracotta underline decoration-dotted transition-colors"
-            >
-              Reset progress
-            </button>
-          </div>
-        )}
+        {showFilters && filtersPanel}
 
         {/* Progress */}
         <div className="mb-8">

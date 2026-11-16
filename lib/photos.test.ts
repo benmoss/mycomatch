@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { onePerSpecies } from "@/lib/photos";
+import { collectPhotos, onePerSpecies } from "@/lib/photos";
 import { Observation } from "@/types/inaturalist";
 
 function obs(id: number, taxonId: number, ancestorIds: number[] = []): Observation {
@@ -35,5 +35,27 @@ describe("onePerSpecies", () => {
     const noPhotos = { ...obs(1, 10), photos: [] };
     const result = onePerSpecies([noPhotos, obs(2, 99)], [10]);
     expect(result).toEqual({});
+  });
+});
+
+describe("collectPhotos", () => {
+  it("makes one follow-up request for species the first page missed", async () => {
+    const requests: number[][] = [];
+    const result = await collectPhotos([10, 20, 30], async (ids) => {
+      requests.push(ids);
+      // The first page is crowded by common species; the follow-up finds the rest
+      return requests.length === 1 ? [obs(1, 10), obs(2, 10)] : ids.map((id) => obs(id * 100, id));
+    });
+    expect(requests).toEqual([[10, 20, 30], [20, 30]]);
+    expect(Object.keys(result).map(Number).sort()).toEqual([10, 20, 30]);
+  });
+
+  it("makes a single request when the first page covers every species", async () => {
+    let requests = 0;
+    await collectPhotos([10], async () => {
+      requests++;
+      return [obs(1, 10)];
+    });
+    expect(requests).toBe(1);
   });
 });

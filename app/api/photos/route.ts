@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchMushroomObservations } from "@/lib/inaturalist";
-import { onePerSpecies } from "@/lib/photos";
+import { collectPhotos } from "@/lib/photos";
 import { getRegionBounds } from "@/types/filters";
 
 export async function GET(request: NextRequest) {
@@ -18,15 +18,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // One request for every species in the quiz; random order varies photos between quizzes
-    const data = await fetchMushroomObservations({
-      taxonId: taxonIds.join(","),
-      perPage: 200,
-      orderBy: "random",
-      ...getRegionBounds(searchParams.get("region") || undefined),
+    // One request covers most species; random order varies photos between quizzes
+    const bounds = getRegionBounds(searchParams.get("region") || undefined);
+    const observations = await collectPhotos(taxonIds, async (ids) => {
+      const data = await fetchMushroomObservations({
+        taxonId: ids.join(","),
+        perPage: 200,
+        orderBy: "random",
+        ...bounds,
+      });
+      return data.results;
     });
 
-    return NextResponse.json({ observations: onePerSpecies(data.results, taxonIds) });
+    return NextResponse.json({ observations });
   } catch (error) {
     console.error("Error fetching photos:", error);
     return NextResponse.json(

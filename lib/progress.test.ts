@@ -103,3 +103,29 @@ describe("storage", () => {
     expect(storage.getItem("mycomatch.progress.v1")).toBeNull();
   });
 });
+
+describe("storage access throwing", () => {
+  it("survives window.localStorage throwing on access", () => {
+    const g = globalThis as { window?: unknown };
+    const original = g.window;
+    g.window = {
+      get localStorage(): Storage {
+        throw new Error("SecurityError");
+      },
+    };
+    try {
+      expect(loadProgress()).toEqual({});
+      expect(() => saveProgress({})).not.toThrow();
+      expect(() => resetProgress()).not.toThrow();
+    } finally {
+      g.window = original;
+    }
+  });
+
+  it("drops malformed entries", () => {
+    const storage = fakeStorage({
+      "mycomatch.progress.v1": JSON.stringify({ 5: { tier: 1 }, 6: entry(6, 2), 7: null }),
+    });
+    expect(Object.keys(loadProgress(storage))).toEqual(["6"]);
+  });
+});

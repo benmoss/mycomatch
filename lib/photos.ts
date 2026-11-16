@@ -18,3 +18,17 @@ export function onePerSpecies(observations: Observation[], taxonIds: number[]): 
   }
   return result;
 }
+
+/**
+ * One photo per species. A random page is dominated by common species, so
+ * species it missed get one follow-up request of their own.
+ */
+export async function collectPhotos(
+  taxonIds: number[],
+  fetchPage: (ids: number[]) => Promise<Observation[]>
+): Promise<Record<number, Observation>> {
+  const found = onePerSpecies(await fetchPage(taxonIds), taxonIds);
+  const missing = taxonIds.filter((id) => !found[id]);
+  if (missing.length === 0) return found;
+  return { ...onePerSpecies(await fetchPage(missing), missing), ...found };
+}

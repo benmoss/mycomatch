@@ -31,7 +31,7 @@ export function fetchLookalikes(taxonId: number): Promise<Lookalike[]> {
   return cached(["lookalikes", String(taxonId)], LOOKALIKES_TTL_SECONDS, async () => {
     const response = await fetch(
       `${INATURALIST_API_BASE}/identifications/similar_species?taxon_id=${taxonId}`,
-      { headers: { "User-Agent": "MycoMatch/1.0" } }
+      { headers: { "User-Agent": "MycoMatch/1.0" }, signal: AbortSignal.timeout(8000) }
     );
     if (!response.ok) {
       throw new Error(`iNaturalist API error: ${response.status}`);

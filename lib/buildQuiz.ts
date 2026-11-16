@@ -9,6 +9,25 @@ import { Lookalike, PoolSpecies, ProgressStore } from "@/types/quiz";
 // Extra species to request so a few missing photos don't shorten the quiz
 const PHOTO_HEADROOM = 5;
 
+// A slow look-alike lookup falls back to family distractors instead of holding up the quiz
+export const LOOKALIKE_TIMEOUT_MS = 3000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(fallback);
+      }
+    );
+  });
+}
+
 export interface QuizDeps {
   fetchPool(filters: QuizFilters): Promise<PoolSpecies[]>;
   fetchLookalikes(taxonId: number): Promise<Lookalike[]>;
@@ -68,15 +87,16 @@ export async function buildQuiz(
   const selected = selectSpecies(pool, store, count + PHOTO_HEADROOM, deps.rng);
 
   const hard = selected.filter((s) => getTier(store, s.taxonId) >= 2);
-  const lookalikeLists = await Promise.all(
-    hard.map((s) => deps.fetchLookalikes(s.taxonId).catch(() => [] as Lookalike[]))
-  );
+  const [lookalikeLists, photos] = await Promise.all([
+    Promise.all(
+      hard.map((s) => withTimeout(deps.fetchLookalikes(s.taxonId), LOOKALIKE_TIMEOUT_MS, [] as Lookalike[]))
+    ),
+    deps.fetchPhotos(
+      selected.map((s) => s.taxonId),
+      filters
+    ),
+  ]);
   const lookalikesById = new Map(hard.map((s, i) => [s.taxonId, lookalikeLists[i]]));
-
-  const photos = await deps.fetchPhotos(
-    selected.map((s) => s.taxonId),
-    filters
-  );
 
   const questions: QuizQuestion[] = [];
   for (const species of selected) {
