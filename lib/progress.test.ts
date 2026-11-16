@@ -8,22 +8,9 @@ import {
   summarize,
 } from "@/lib/progress";
 import { ProgressStore, SpeciesProgress, Tier } from "@/types/quiz";
+import { fakeStorage } from "@/test/helpers";
 
 const now = new Date("2026-11-16T12:00:00Z");
-
-function fakeStorage(initial: Record<string, string> = {}): Storage {
-  const data = new Map(Object.entries(initial));
-  return {
-    get length() {
-      return data.size;
-    },
-    clear: () => data.clear(),
-    getItem: (k) => data.get(k) ?? null,
-    key: (i) => [...data.keys()][i] ?? null,
-    removeItem: (k) => void data.delete(k),
-    setItem: (k, v) => void data.set(k, v),
-  };
-}
 
 function entry(taxonId: number, tier: Tier, streak = 0): SpeciesProgress {
   return { taxonId, tier, streak, seen: 1, correct: 1, lastSeen: now.toISOString(), confusions: {} };

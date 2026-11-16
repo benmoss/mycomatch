@@ -1,15 +1,7 @@
+import { shuffled } from "@/lib/random";
 import { AnswerOption, Lookalike, PoolSpecies, Tier } from "@/types/quiz";
 
 const DISTRACTOR_COUNT = 3;
-
-function shuffled<T>(items: T[], rng: () => number): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
 
 function toOption(s: { taxonId: number; scientificName: string; commonName: string }): AnswerOption {
   return { taxonId: s.taxonId, scientificName: s.scientificName, commonName: s.commonName };

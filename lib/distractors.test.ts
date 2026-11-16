@@ -1,18 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { pickDistractors } from "@/lib/distractors";
 import { Lookalike, PoolSpecies } from "@/types/quiz";
-
-// Deterministic rng (mulberry32)
-function seeded(seed = 42): () => number {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+import { seeded } from "@/test/helpers";
 
 // Families: 11 & 12 in order 21, 13 in order 22
 function sp(taxonId: number, genusId: number, familyId: number, orderId: number): PoolSpecies {
