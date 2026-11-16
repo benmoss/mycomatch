@@ -4,7 +4,7 @@ import { Observation, QuizQuestion } from "@/types/inaturalist";
  * Normalize common name capitalization to title case
  * Handles hyphenated words properly (e.g., "jack-o'-lantern" -> "Jack-O'-Lantern")
  */
-function normalizeCommonName(name: string): string {
+export function normalizeCommonName(name: string): string {
   return name
     .split(' ')
     .map(word => {
