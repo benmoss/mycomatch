@@ -1,3 +1,5 @@
+import { AnswerOption, Tier } from "@/types/quiz";
+
 export interface Photo {
   id: number;
   url: string;
@@ -41,20 +43,14 @@ export interface QuizQuestion {
   photoUrl: string;
   photoAttribution: string;
   photos: Photo[]; // Multiple photos from the observation
-  correctAnswer: {
-    scientificName: string;
-    commonName: string;
-    taxonId: number;
-  };
-  options: Array<{
-    scientificName: string;
-    commonName: string;
-    taxonId: number;
-  }>;
+  correctAnswer: AnswerOption;
+  options: AnswerOption[];
   observationId: number;
   location?: {
     lat: number;
     lng: number;
     place: string;
   };
+  speciesTier: Tier; // the species' mastery tier when the quiz was built
+  usedTier: 0 | 1 | 2; // the distractor tier actually used
 }
