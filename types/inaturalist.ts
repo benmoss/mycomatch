@@ -12,6 +12,7 @@ export interface Taxon {
   preferred_common_name?: string;
   iconic_taxon_name: string;
   observations_count: number;
+  ancestor_ids?: number[];
 }
 
 export interface Observation {

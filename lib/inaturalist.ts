@@ -3,7 +3,7 @@ import { INaturalistResponse, Observation } from "@/types/inaturalist";
 const INATURALIST_API_BASE = "https://api.inaturalist.org/v1";
 
 export interface FetchObservationsParams {
-  taxonId?: number;
+  taxonId?: number | string; // comma-separated for several taxa
   iconicTaxa?: string;
   qualityGrade?: string;
   photos?: boolean;
@@ -19,6 +19,7 @@ export interface FetchObservationsParams {
   nelng?: number;
   swlat?: number;
   swlng?: number;
+  orderBy?: string;
 }
 
 export async function fetchMushroomObservations(
@@ -50,6 +51,7 @@ export async function fetchMushroomObservations(
     qualityGrade: "quality_grade",
     perPage: "per_page",
     photoLicense: "photo_license",
+    orderBy: "order_by",
   };
 
   Object.entries(mergedParams).forEach(([key, value]) => {
