@@ -50,7 +50,8 @@ describe("quiz session", () => {
   });
 
   it("returns null when questions are missing usedTier", () => {
-    const { usedTier: _omit, ...oldQuestion } = question;
+    const oldQuestion: Partial<QuizQuestion> = { ...question };
+    delete oldQuestion.usedTier;
     const storage = fakeStorage({
       "mycomatch.quizState.v2": JSON.stringify({ ...session, questions: [oldQuestion] }),
     });

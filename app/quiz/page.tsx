@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { INaturalistResponse, QuizQuestion } from "@/types/inaturalist";
-import { generateQuizQuestions } from "@/lib/quiz";
+import { QuizQuestion } from "@/types/inaturalist";
+import { buildQuiz, httpQuizDeps } from "@/lib/buildQuiz";
+import { getTier, loadProgress, recordAnswer, resetProgress, saveProgress, summarize } from "@/lib/progress";
+import { clearSession, loadSession, QuizSession, saveSession } from "@/lib/session";
 import Image from "next/image";
 import { COMMON_TAXA, REGIONS, QuizFilters } from "@/types/filters";
+
+const TIER_LABELS = ["New species", "Same family", "Look-alikes"] as const;
 
 export default function QuizPage() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -29,71 +33,66 @@ export default function QuizPage() {
     url: string;
   } | null>(null);
   const [loadingSpeciesInfo, setLoadingSpeciesInfo] = useState(false);
+  // question index -> chosen option index, so answered questions stay answered after a reload
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  // taxonIds that moved up a tier during this quiz
+  const [promoted, setPromoted] = useState<number[]>([]);
+  const [progressSummary, setProgressSummary] = useState({ mastered: 0, learning: 0, seen: 0 });
 
   useEffect(() => {
-    // Try to load saved state from localStorage
-    const savedState = localStorage.getItem('quizState');
-    if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        setQuestions(state.questions);
-        setCurrentQuestionIndex(state.currentQuestionIndex);
-        setScore(state.score);
-        setFilters(state.filters || {});
-        setLoading(false);
-      } catch (e) {
-        console.error('Failed to load saved quiz state:', e);
-        loadQuiz();
+    setProgressSummary(summarize(loadProgress()));
+
+    const saved = loadSession();
+    if (saved) {
+      setQuestions(saved.questions);
+      setCurrentQuestionIndex(saved.currentQuestionIndex);
+      setScore(saved.score);
+      setFilters(saved.filters || {});
+      setAnswers(saved.answers);
+      setPromoted(saved.promoted);
+
+      const savedAnswer = saved.answers[saved.currentQuestionIndex];
+      if (savedAnswer !== undefined) {
+        setSelectedAnswer(savedAnswer);
+        setHighlightedAnswer(savedAnswer);
+        setIsAnswered(true);
+        fetchSpeciesInfo(saved.questions[saved.currentQuestionIndex].correctAnswer.scientificName);
       }
+      setLoading(false);
     } else {
       loadQuiz();
     }
   }, []);
 
-  const saveQuizState = (index: number, currentScore: number) => {
-    const state = {
+  const persistSession = (changes: Partial<QuizSession>) => {
+    saveSession({
       questions,
-      currentQuestionIndex: index,
-      score: currentScore,
+      currentQuestionIndex,
+      score,
       filters,
-    };
-    localStorage.setItem('quizState', JSON.stringify(state));
+      answers,
+      promoted,
+      ...changes,
+    });
   };
 
   const loadQuiz = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Build query params from filters
-      const params = new URLSearchParams({ perPage: "50" });
-
-      if (filters.taxonId) {
-        params.append("taxonId", filters.taxonId.toString());
-      }
-
-      if (filters.region) {
-        const region = REGIONS.find(r => r.id === filters.region);
-        if (region?.bounds) {
-          params.append("nelat", region.bounds.nelat.toString());
-          params.append("nelng", region.bounds.nelng.toString());
-          params.append("swlat", region.bounds.swlat.toString());
-          params.append("swlng", region.bounds.swlng.toString());
-        }
-      }
-
-      const response = await fetch(`/api/observations?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch observations");
-
-      const data: INaturalistResponse = await response.json();
-      const quizQuestions = generateQuizQuestions(data.results, 10);
-
-      if (quizQuestions.length === 0) {
-        throw new Error("Could not generate quiz questions");
-      }
+      const quizQuestions = await buildQuiz(filters, loadProgress(), httpQuizDeps);
 
       setQuestions(quizQuestions);
-      // Clear any existing saved state when starting a new quiz
-      localStorage.removeItem('quizState');
+      setAnswers({});
+      setPromoted([]);
+      saveSession({
+        questions: quizQuestions,
+        currentQuestionIndex: 0,
+        score: 0,
+        filters,
+        answers: {},
+        promoted: [],
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -133,17 +132,30 @@ export default function QuizPage() {
     const currentQuestion = questions[currentQuestionIndex];
     const selectedOption = currentQuestion.options[highlightedAnswer];
 
+    const answerTaxonId = currentQuestion.correctAnswer.taxonId;
     let newScore = score;
-    if (selectedOption.taxonId === currentQuestion.correctAnswer.taxonId) {
+    if (selectedOption.taxonId === answerTaxonId) {
       newScore = score + 1;
       setScore(newScore);
     }
 
+    // Update this species' mastery
+    const store = loadProgress();
+    const tierBefore = getTier(store, answerTaxonId);
+    const updated = recordAnswer(store, answerTaxonId, selectedOption.taxonId, new Date());
+    saveProgress(updated);
+    setProgressSummary(summarize(updated));
+
+    const newPromoted = getTier(updated, answerTaxonId) > tierBefore ? [...promoted, answerTaxonId] : promoted;
+    const newAnswers = { ...answers, [currentQuestionIndex]: highlightedAnswer };
+    setPromoted(newPromoted);
+    setAnswers(newAnswers);
+
     // Fetch species info for the correct answer
     fetchSpeciesInfo(currentQuestion.correctAnswer.scientificName);
 
-    // Save state after answering
-    saveQuizState(currentQuestionIndex, newScore);
+    // Save right away so a reload can't answer this question again
+    persistSession({ score: newScore, answers: newAnswers, promoted: newPromoted });
   };
 
   const handleNext = () => {
@@ -163,8 +175,7 @@ export default function QuizPage() {
         setShowLocationHint(false);
         setSpeciesInfo(null);
 
-        // Save state to localStorage
-        saveQuizState(newIndex, score);
+        persistSession({ currentQuestionIndex: newIndex });
 
         // Wait a frame for DOM to update, then fade in
         requestAnimationFrame(() => {
@@ -180,8 +191,14 @@ export default function QuizPage() {
     setHighlightedAnswer(null);
     setIsAnswered(false);
     setScore(0);
-    localStorage.removeItem('quizState');
+    clearSession();
     loadQuiz();
+  };
+
+  const handleResetProgress = () => {
+    if (!window.confirm("Reset all progress? This can't be undone.")) return;
+    resetProgress();
+    setProgressSummary(summarize({}));
   };
 
   const handleApplyFilters = () => {
@@ -270,7 +287,7 @@ export default function QuizPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showFilters, isImageZoomed, showKeyboardShortcuts, highlightedAnswer, isAnswered, questions, currentQuestionIndex]);
+  }, [showFilters, isImageZoomed, showKeyboardShortcuts, highlightedAnswer, isAnswered, questions, currentQuestionIndex, answers, promoted, score]);
 
   if (loading) {
     return (
@@ -319,6 +336,9 @@ export default function QuizPage() {
           <div className="flex justify-between items-center mb-3">
             <h1 className="text-3xl md:text-4xl font-serif font-bold text-forest tracking-tight">🍄 MycoMatch</h1>
             <div className="flex items-center gap-3 md:gap-4">
+              <span className="text-xs md:text-sm text-forest/80 hidden sm:block">
+                🍄 {progressSummary.mastered} mastered · {progressSummary.learning} learning
+              </span>
               <button
                 onClick={() => setShowKeyboardShortcuts(true)}
                 className="text-xs md:text-sm text-sage hover:text-forest transition-colors underline decoration-dotted hidden sm:block"
@@ -394,6 +414,13 @@ export default function QuizPage() {
                 Cancel
               </button>
             </div>
+
+            <button
+              onClick={handleResetProgress}
+              className="mt-5 text-sm text-sage hover:text-terracotta underline decoration-dotted transition-colors"
+            >
+              Reset progress
+            </button>
           </div>
         )}
 
@@ -417,6 +444,13 @@ export default function QuizPage() {
         <div className={`bg-white dark:bg-gray-900/50 rounded-2xl shadow-2xl border-2 border-sage/10 p-6 md:p-8 transition-opacity duration-150 ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}>
+          {/* Difficulty of this question's answer choices */}
+          <div className="mb-4">
+            <span className="inline-block text-xs font-semibold uppercase tracking-wide bg-sand/50 text-forest border-2 border-moss/20 px-3 py-1 rounded-full">
+              {TIER_LABELS[currentQuestion.usedTier]}
+            </span>
+          </div>
+
           {/* Image Carousel */}
           <div className="relative mb-8">
             <div
@@ -615,6 +649,19 @@ export default function QuizPage() {
                     Final Score: <span className="font-bold text-terracotta">{score}</span> / {questions.length}
                     <span className="text-moss ml-2">({Math.round((score / questions.length) * 100)}%)</span>
                   </p>
+                  <p className="text-forest/80 mb-2">
+                    🍄 {progressSummary.mastered} mastered · {progressSummary.learning} learning · {progressSummary.seen} seen
+                  </p>
+                  {promoted.length > 0 && (
+                    <p className="text-sm text-sage mb-8">
+                      Moved up:{" "}
+                      {promoted
+                        .map((taxonId) => questions.find((q) => q.correctAnswer.taxonId === taxonId)?.correctAnswer.commonName)
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
+                  )}
+                  {promoted.length === 0 && <div className="mb-8" />}
                   <button
                     onClick={handleRestart}
                     className="bg-terracotta hover:bg-clay text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
