@@ -1,7 +1,6 @@
 export interface QuizFilters {
   taxonId?: number;
   region?: string;
-  difficulty?: "easy" | "medium" | "hard";
 }
 
 // Fungal phyla for filtering (from iNaturalist API)
@@ -28,4 +27,8 @@ export interface RegionBounds {
   nelng: number;
   swlat: number;
   swlng: number;
+}
+
+export function getRegionBounds(regionId?: string): RegionBounds | undefined {
+  return REGIONS.find((r) => r.id === regionId)?.bounds;
 }
